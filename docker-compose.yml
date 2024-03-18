@@ -1,0 +1,39 @@
+version: "2.2"
+
+services:
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    volumes:
+      - /home/benjamin/dev/perso/docker/ollama:/root/.ollama
+    ports:
+      - 11434:11434
+
+  ragtime:
+    image: ragtime:develop
+    container_name: ragtime
+    ports:
+      - "127.0.0.1:8089:8080"
+      - "127.0.0.1:11550:11550"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - "elastic.indexName=vector"
+      - "elastic.password="
+      - "elastic.username="
+      - "elastic.url=http://localhost:9201"
+      - "JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:11550"
+      - "elastic.host=localhost"
+      - "elastic.port=9201"
+      - "elatsic.protocol=http"
+      - "ollama.url=http://host.docker.internal:11434"
+      - "ollama.model=mistral"
+      - "ollama.duration=240"
+      - "ollama.retry=1"
+      - "vector.freq.cron=1h"
+      - "source-elastic.vector-user-id=65af9c0648a1c914d5cc16ae"
+      - "source-elastic.host=es01"
+      - "source-elastic.scheme=http"
+      - "source-elastic.port=9200"
+      - "source-elastic.username="
+      - "source-elastic.password="
