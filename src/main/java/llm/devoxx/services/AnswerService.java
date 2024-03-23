@@ -1,10 +1,5 @@
 package llm.devoxx.services;
 
-import llm.devoxx.json.Answer;
-import llm.devoxx.json.CompleteAnswer;
-import llm.devoxx.json.Question;
-import llm.devoxx.json.QuestionRequest;
-import llm.devoxx.util.Tools;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -14,9 +9,14 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import llm.devoxx.json.Answer;
+import llm.devoxx.json.CompleteAnswer;
+import llm.devoxx.json.Question;
 import llm.devoxx.util.Constants;
+import llm.devoxx.util.Tools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,8 +26,7 @@ public class AnswerService {
     @Inject
     Tools tools;
 
-    public CompleteAnswer processQuestion(QuestionRequest questionRequest) {
-        Question question = questionRequest.getQuestion();
+    public CompleteAnswer processQuestion(Question question) {
 
         EmbeddingStore<TextSegment> store = tools.getStore();
         EmbeddingModel model = tools.createEmbeddingModel();
@@ -40,7 +39,7 @@ public class AnswerService {
         List<Answer> answers = new ArrayList<>();
 
         StringBuilder rep = new StringBuilder(question.getQuestion());
-        LOGGER.info("Generating answer for question: \"{}\" based on index={}", question.getQuestion(), questionRequest.getIndex());
+        LOGGER.info("Generating answer for question: \"{}\"", question.getQuestion());
         for (var rel : relevant) {
             answers.add(new Answer(rel.embedded().text(), rel.score(), rel.embedded().metadata()));
 

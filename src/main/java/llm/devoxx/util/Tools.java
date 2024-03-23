@@ -115,12 +115,14 @@ public class Tools {
 
     public EmbeddingModel createEmbeddingModel() {
         return new OllamaEmbeddingModel(ollamaUrl, ollamaModel, Duration.ofSeconds(ollamaDuration),ollamaRetry);
+
     }
 
     public LanguageModel createLanguageModel() {
         return getLanguageModelBuilder()
                 .timeout(Duration.ofSeconds(ollamaDuration))
                 .build();
+
     }
 
     private OllamaLanguageModel.OllamaLanguageModelBuilder getLanguageModelBuilder() {
