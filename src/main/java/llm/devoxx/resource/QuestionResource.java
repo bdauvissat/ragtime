@@ -7,19 +7,19 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import llm.devoxx.json.CompleteAnswer;
 import llm.devoxx.json.Question;
-import llm.devoxx.services.AnswerService;
+import llm.devoxx.services.QuestionService;
 
-@Path(("/answer"))
-public class AnswerResource {
+@Path(("/question"))
+public class QuestionResource {
 
     @Inject
-    AnswerService answerService;
+    QuestionService questionService;
 
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public CompleteAnswer firstAnswer(Question question) {
-        return answerService.processQuestion(question);
+    public CompleteAnswer question(Question question) {
+        return questionService.processQuestion(question);
     }
 
 }

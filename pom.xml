@@ -77,6 +77,19 @@
             <version>2.17.0</version>
         </dependency>
 
+<!--        Dépendances des librairies spécifiques Quarkus - Langchain4J-->
+
+        <dependency>
+            <groupId>io.quarkiverse.langchain4j</groupId>
+            <artifactId>quarkus-langchain4j-ollama</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkiverse.langchain4j</groupId>
+            <artifactId>quarkus-langchain4j-ollama-deployment</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>

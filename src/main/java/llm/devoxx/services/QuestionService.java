@@ -21,8 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
-public class AnswerService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AnswerService.class);
+public class QuestionService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(QuestionService.class);
     @Inject
     Tools tools;
 
