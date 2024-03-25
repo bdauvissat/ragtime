@@ -26,13 +26,16 @@ public class QuestionService {
     @Inject
     Tools tools;
 
+    @Inject
+    EmbeddingModel embeddingModel;
+
     public CompleteAnswer processQuestion(Question question) {
 
         EmbeddingStore<TextSegment> store = tools.getStore();
-        EmbeddingModel model = tools.createEmbeddingModel();
+        //EmbeddingModel model = tools.createEmbeddingModel();
         LanguageModel languageModel = tools.createLanguageModel();
 
-        Embedding queryEmbedded = model.embed(question.getQuestion()).content();
+        Embedding queryEmbedded = embeddingModel.embed(question.getQuestion()).content();
 
         List<EmbeddingMatch<TextSegment>> relevant = store.findRelevant(queryEmbedded,3, 0.55);
 

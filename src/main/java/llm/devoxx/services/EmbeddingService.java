@@ -32,10 +32,13 @@ public class EmbeddingService {
     @Inject
     Tools tools;
 
+    @Inject
+    EmbeddingModel embeddingModel;
+
     public void embedDocument(RagDocument documentRequest) {
 
         ElasticsearchEmbeddingStore store = tools.getStore();
-        EmbeddingModel embeddingModel = tools.createEmbeddingModel();
+        //EmbeddingModel embeddingModel = tools.createEmbeddingModel();
 
         embedAndStoreDocuments(store, embeddingModel, documentRequest);
 
@@ -50,7 +53,7 @@ public class EmbeddingService {
         }
 
         ElasticsearchEmbeddingStore store = tools.getStore();
-        EmbeddingModel embeddingModel = tools.createEmbeddingModel();
+        //EmbeddingModel embeddingModel = tools.createEmbeddingModel();
 
         for (RagDocument doc : documents) {
 
