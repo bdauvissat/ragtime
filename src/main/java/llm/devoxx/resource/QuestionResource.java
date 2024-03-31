@@ -22,4 +22,18 @@ public class QuestionResource {
         return questionService.processQuestion(question);
     }
 
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/chat")
+    public CompleteAnswer chat(Question question) {
+        return questionService.chatWithDocs(question);
+    }
+
+//    @POST
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @Path("/chatmem")
+//    public CompleteAnswer chatMemory(Question question) {
+//        return questionService.chatWithDocsAndMemory(question);
+//    }
+
 }

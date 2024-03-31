@@ -96,7 +96,7 @@ public class EmbeddingService {
                 documents.add(new RagDocument(name, path, content));
                 count++;
 
-                if (count >= folderPath.getLimit()) {
+                if (folderPath.getLimit() > 0 && count >= folderPath.getLimit()) {
                     break;
                 }
 

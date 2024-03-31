@@ -6,6 +6,8 @@ public class Question {
 
     private boolean generateAnswer;
 
+    private boolean newChat;
+
     public Question() {
     }
 
@@ -28,5 +30,13 @@ public class Question {
 
     public void setGenerateAnswer(boolean generateAnswer) {
         this.generateAnswer = generateAnswer;
+    }
+
+    public boolean isNewChat() {
+        return newChat;
+    }
+
+    public void setNewChat(boolean newChat) {
+        this.newChat = newChat;
     }
 }
