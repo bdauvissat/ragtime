@@ -1,75 +1,96 @@
-# RAGTime
+# RAGtime : Discuter avec vos propres données
 
-Command for getting the certificate fingerprint :
-```shell script
-openssl s_client -connect localhost:9200 -servername localhost -showcerts </dev/null 2>/dev/null \
-| openssl x509 -fingerprint -sha256 -noout -in /dev/stdin
+## Installation des prérequis (obligatoire)
+
+Ce workshop, [présenté à Devoxx FR](https://www.devoxx.fr/schedule/talk/?id=29366), nécessite un certain nombre de prérequis que vous ne pourrez pas installer en début de séance à cause de leur taille. **Merci donc de suivre la procédure suivante avant d’arriver au workshop.**
+
+En cas d’affluence, les animateurs du workshop se réservent le droit de donner la priorité aux participants qui auront installé les prérequis.
+
+### Clonez ce projet
+
+```
+git clone https://github.com/bdauvissat/ragtime.git
+cd ragtime
 ```
 
-This project uses Quarkus and Java 17.
+### Projet Java
 
-All parameters for Elasticsearch and Ollama connexion are in the application.properties file 
+Assurez-vous d'avoir Java 17 ou plus installé et soit :
 
-## Running the application in dev mode
+* chargez le projet dans votre IDE favori,
+* ou téléchargez les librairies nécessaires en exécutant :
 
-You can run your application in dev mode that enables live coding using:
+  ```
+  ./mvnw dependency:resolve
+  ```
 
-```shell script
-./mvnw compile quarkus:dev
+### Docker et images
+
+Assurez-vous que [Docker](https://www.docker.com/products/docker-desktop/) et sa ligne de commande sont installés.
+
+Chargez les images Docker en exécutant :
+
 ```
-Or
-```shell script
+docker compose pull
+```
+
+<details>
+  <summary>Tester l'installation de Elasticsearch et Kibana</summary>
+  <blockquote>
+  Pour lancer Elasticsearch et Kibana, executez la commande :
+
+  ```
+  docker compose up devoxx-kibana
+  ```
+
+Connectez-vous ensuite à [http://localhost:5601](http://localhost:5601) avec le login `elastic` et le mot de passe `elasticpwd`.
+  </blockquote>
+</details>
+
+
+### Ollama
+
+[Ollama](https://ollama.com/) est un serveur permettant de faire fonctionner des LLM localement sur votre machine. Deux options sont possibles en fonction de votre configuration: installation locale (recommandé) ou avec Docker.
+
+En plus de l'installation de Ollama, il est nécessaire de télécharger [Gemma 2B](https://ollama.com/library/gemma), le petit LLM utilisé pour le workshop qui peut fonctionner sur des configurations modestes.
+
+<details>
+  <summary><b>Installation locale (recommandé)</b></summary>
+
+Cette installation permettra à Ollama de [tirer partie du GPU](https://github.com/ollama/ollama/blob/main/docs/gpu.md) présent sur votre machine. Suivez les instructions sur [https://ollama.com/download](https://ollama.com/download).
+
+Une fois installé et lancé, téléchargez le modèle avec `ollama pull gemma:2b`.
+
+Pour discuter avec le modèle, lancez `ollama run gemma:2b` et dites quelque chose, par exemple "Bonjour, comment vas-tu ?"
+
+</details>
+
+<details>
+  <summary><b>Installation avec Docker</b></summary>
+
+Si l'installation locale n'est pas possible, lancez Ollama en exécutant la commande suivante :
+
+```
+docker compose up ollama
+```
+
+Une fois lancé, chargez le modèle avec
+
+```
+docker exec -it ollama-devoxx ollama pull gemma:2b
+```
+
+Pour discuter avec le modèle, lancez `docker exec -it ollama-devoxx ollama run gemma:2b` et dites quelque chose, par exemple "Bonjour, comment vas-tu ?"
+
+</details>
+
+## Lancer le projet
+
+Pour lancer l'application en "dev mode" qui permet aussi le live-reload, executez :
+
+```
 mvn quarkus:dev
 ```
-Or run it in your IDE
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
+La console de développement de Quarkus est alors disponible sur [http://localhost:8080/q/dev/](http://localhost:8080/q/dev/)
 
-## Packaging and running the application
-
-The application can be packaged using:
-
-```shell script
-./mvnw package
-```
-
-It produces the `ragtime.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
-
-The application is now runnable using `java -jar target/quarkus-app/ragtime.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./mvnw package -Dquarkus.package.type=uber-jar
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./target/ragtime-1.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.
-
-## Related Guides
-
-## Provided Code
-
-### RESTEasy Reactive
-
-Easily start your Reactive RESTful Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
