@@ -9,7 +9,6 @@ import dev.langchain4j.model.ollama.OllamaEmbeddingModel;
 import dev.langchain4j.model.ollama.OllamaLanguageModel;
 import dev.langchain4j.store.embedding.elasticsearch.ElasticsearchEmbeddingStore;
 import jakarta.inject.Singleton;
-import llm.devoxx.config.CertificateTrustManager;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -22,8 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import java.security.KeyManagementException;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -38,15 +35,6 @@ public class Tools {
 
     @ConfigProperty(name = "elastic.password")
     Optional<String> elasticPassword;
-
-    @ConfigProperty(name = "elastic.host")
-    String elasticHost;
-
-    @ConfigProperty(name = "elastic.port")
-    int elasticPort;
-
-    @ConfigProperty(name = "elastic.protocol")
-    String elasticProtocol;
 
     @ConfigProperty(name = "elastic.url")
     String elasticUrl;
@@ -74,13 +62,6 @@ public class Tools {
 
     public ElasticsearchEmbeddingStore getStore() {
         ElasticsearchEmbeddingStore.Builder storeBuilder = ElasticsearchEmbeddingStore.builder().serverUrl(elasticUrl);
-        /* set basic auth credentials if elastic auth is enabled */
-        if (elasticUsername.isPresent() && elasticPassword.isPresent()) {
-            storeBuilder.userName(elasticUsername.get()).password(elasticPassword.get());
-        }
-        /* add elastic api key if it exists */
-        elasticApiKey.ifPresent(storeBuilder::apiKey);
-
         return storeBuilder
                 .restClient(buildRestClient())
                 .dimension(elasticDimension)
@@ -92,13 +73,8 @@ public class Tools {
     private RestClient buildRestClient() {
 
         final SSLContext context = TransportUtils.sslContextFromCaFingerprint(fingerprint.orElse(Constants.EMPTY_STRING));
-        try {
-            context.init(null, new TrustManager[]{new CertificateTrustManager()}, null);
-        } catch (KeyManagementException e) {
-            LOGGER.error("Failure to correctly init SSLContext. Reason={}", e.getMessage());
-        }
 
-        RestClientBuilder builder = RestClient.builder(new HttpHost(elasticHost, elasticPort, elasticProtocol));
+        RestClientBuilder builder = RestClient.builder(HttpHost.create(elasticUrl));
         if (elasticUsername.isPresent() && elasticPassword.isPresent()) {
             BasicCredentialsProvider creds = new BasicCredentialsProvider();
             creds.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(elasticUsername.get(), elasticPassword.get()));
