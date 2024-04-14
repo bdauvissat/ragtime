@@ -140,7 +140,8 @@ public class QuestionService {
         Prompt prompt = promptTemplate.apply(parameters);
 
         QueryTransformer queryTransformer = new CompressingQueryTransformer(chatModel);
-        Query query = Query.from(prompt.text(), new Metadata(UserMessage.from(prompt.text()), 1, chatMemory.messages()));
+        Query query = Query.from(prompt.text(), new Metadata(UserMessage.from(prompt.text()), chatMemory.messages(),
+                chatMemory.messages()));
         queryTransformer.transform(query);
 
         ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
