@@ -1,5 +1,8 @@
 package llm.devoxx.services;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.Metadata;
@@ -23,8 +26,10 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class EmbeddingService {
@@ -73,7 +78,60 @@ public class EmbeddingService {
             return null;
         }
 
-        // For this test, we exclude everything but txt files
+        // txt files are computed
+        List<RagDocument> documents = getRagDocumentsFromTxt(folderPath, folder);
+        documents.addAll(getRagDocumentsFromJson(folderPath, folder));
+        if (documents == null) return null;
+
+        if (CollectionUtils.isEmpty(documents)) {
+            return null;
+        }
+
+        return documents;
+
+    }
+
+    private Collection<? extends RagDocument> getRagDocumentsFromJson(RagFolder folderPath, File folder) {
+        FilenameFilter filter = (dir, name) -> name.endsWith(".json");
+        File[] files = folder.listFiles(filter);
+
+        if (files == null || files.length == 0) {
+            LOGGER.error("{} is emtpy", folder.getName());
+            return null;
+        }
+
+        List<RagDocument> documents = new ArrayList<>();
+
+        for (File file : files) {
+
+            try {
+                String content = Files.readString(file.toPath());
+
+                JsonArray jsonObject = JsonParser.parseString(content).getAsJsonArray();
+
+                List<JsonElement> allArticles = jsonObject.getAsJsonArray().asList();
+
+                for (JsonElement article : allArticles) {
+
+                    String name = article.getAsJsonObject().get("title").getAsString();
+                    String path = article.getAsJsonObject().get("url").getAsString();
+                    JsonArray articleContent = article.getAsJsonObject().get("body").getAsJsonObject().get("sections").getAsJsonArray().get(0).getAsJsonObject().get("paragraphs").getAsJsonObject().get("_data").getAsJsonArray();
+                    String myContent =
+                            articleContent.asList().stream().map( ac -> ac.getAsString()).collect(Collectors.joining(System.lineSeparator()));
+                    documents.add(new RagDocument(name, path, myContent));
+                }
+
+            } catch (IOException e) {
+                LOGGER.error("Error while reading file {}", file.getName(), e);
+            }
+
+        }
+
+        return documents;
+
+    }
+
+    private List<RagDocument> getRagDocumentsFromTxt(RagFolder folderPath, File folder) {
         FilenameFilter filter = (dir, name) -> name.endsWith(".txt");
 
         File[] files = folder.listFiles(filter);
@@ -83,7 +141,7 @@ public class EmbeddingService {
             return null;
         }
 
-        List<RagDocument> documents = new ArrayList<>(files.length);
+        List<RagDocument> documents = new ArrayList<>();
 
         int count = 0;
 
@@ -105,13 +163,7 @@ public class EmbeddingService {
             }
 
         }
-
-        if (CollectionUtils.isEmpty(documents)) {
-            return null;
-        }
-
         return documents;
-
     }
 
     private void embedAndStoreDocuments(EmbeddingStore<TextSegment> store, EmbeddingModel model,
