@@ -5,7 +5,7 @@ services:
     image: ollama/ollama
     container_name: ollama-devoxx
     volumes:
-      - /home/benjamin/dev/perso/docker/ollama:/root/.ollama
+      - devoxx-ollama:/root/.ollama
     ports:
       - 11434:11434
     environment:
@@ -134,3 +134,4 @@ volumes:
   devoxx-certs:
   devoxx-es01:
   devoxx-kibana:
+  devoxx-ollama:
