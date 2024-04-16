@@ -25,6 +25,7 @@ Assurez-vous d'avoir Java 17 ou plus installé et soit :
   ```
 
 ### Docker et images
+**ATTENTION: si votre PC est sous windows, vous pouvez utiliser WSL et docker, et eventuellement tirer profit des capacités de votre carte graphique. [Voir le doc spécifique](Windows-WSL-Docker.md) avant de continer.**
 
 Assurez-vous que [Docker](https://www.docker.com/products/docker-desktop/) et sa ligne de commande sont installés.
 
