@@ -1,11 +1,6 @@
 package llm.devoxx.services;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-
+import com.google.gson.*;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.Metadata;
@@ -29,7 +24,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -92,7 +86,7 @@ public class EmbeddingService {
 
     }
 
-    private Collection<? extends RagDocument> getRagDocumentsFromJson(File folder) {
+    private List<RagDocument> getRagDocumentsFromJson(File folder) {
         FilenameFilter filter = (dir, name) -> name.endsWith(".json");
         File[] files = folder.listFiles(filter);
 
