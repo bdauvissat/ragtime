@@ -8,6 +8,7 @@ import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.ollama.OllamaEmbeddingModel;
 import dev.langchain4j.model.ollama.OllamaLanguageModel;
 import dev.langchain4j.store.embedding.elasticsearch.ElasticsearchEmbeddingStore;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -60,14 +61,26 @@ public class Tools {
     @ConfigProperty(name = "ollama.retry")
     int ollamaRetry;
 
-    public ElasticsearchEmbeddingStore getStore() {
+    private ElasticsearchEmbeddingStore store;
+
+    private EmbeddingModel embeddingModel;
+
+    @PostConstruct
+    public void initialize() {
         ElasticsearchEmbeddingStore.Builder storeBuilder = ElasticsearchEmbeddingStore.builder().serverUrl(elasticUrl);
-        return storeBuilder
+        store = storeBuilder
                 .restClient(buildRestClient())
                 .dimension(elasticDimension)
                 .indexName(elasticIndexName)
                 .build();
+                LOGGER.info("Elasticsearch Indexing Client OK on {}",elasticUrl);
+        
+        embeddingModel = new OllamaEmbeddingModel(ollamaUrl, ollamaModel, Duration.ofSeconds(ollamaDuration),ollamaRetry);
+    }
 
+    
+    public ElasticsearchEmbeddingStore getStore() {
+        return store;
     }
 
     private RestClient buildRestClient() {
@@ -92,9 +105,7 @@ public class Tools {
     }
 
     public EmbeddingModel createEmbeddingModel() {
-
-        return new OllamaEmbeddingModel(ollamaUrl, ollamaModel, Duration.ofSeconds(ollamaDuration),ollamaRetry);
-
+        return embeddingModel;
     }
 
     public LanguageModel createLanguageModel() {
