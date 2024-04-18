@@ -1,5 +1,11 @@
 package llm.devoxx.services;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.Metadata;
@@ -35,10 +41,13 @@ public class EmbeddingService {
     @Inject
     EmbeddingModel embeddingModel;
 
+    // why not @inject embeddingStore  or make it a singleton in store ???
+    // ElasticsearchEmbeddingStore embeddingStore = tools.getStore();
+
     public void embedDocument(RagDocument documentRequest) {
 
         ElasticsearchEmbeddingStore store = tools.getStore();
-        //EmbeddingModel embeddingModel = tools.createEmbeddingModel();
+        EmbeddingModel embeddingModel = tools.createEmbeddingModel();
 
         embedAndStoreDocuments(store, embeddingModel, documentRequest);
 
@@ -73,24 +82,72 @@ public class EmbeddingService {
             return null;
         }
 
-        // For this test, we exclude everything but txt files
-        FilenameFilter filter = (dir, name) -> name.endsWith(".txt");
-
-        File[] files = folder.listFiles(filter);
-
-        if (files == null || files.length == 0) {
-            LOGGER.error("{} is emtpy", folder.getName());
+        // txt files are computed
+        List<RagDocument> documents = getRagDocumentsFromTxt(folderPath, folder);
+ //       if (documents == null)
+ //           documents = new ArrayList<RagDocument>();
+        documents.addAll(getRagDocumentsFromJson(folder));
+        if (CollectionUtils.isEmpty(documents)) {
             return null;
         }
 
-        List<RagDocument> documents = new ArrayList<>(files.length);
+        return documents;
 
+    }
+
+    private Collection<? extends RagDocument> getRagDocumentsFromJson(File folder) {
+        FilenameFilter filter = (dir, name) -> name.endsWith(".json");
+        File[] files = folder.listFiles(filter);
+
+        if (files == null || files.length == 0) {
+            LOGGER.warn("{} contains no Json file !", folder.getName());
+            return null;
+        }
         int count = 0;
-
+        List<RagDocument> documents = new ArrayList<>();
+        Gson gson = new Gson();
         for (File file : files) {
 
             try {
-                String content = Files.readString(file.toPath());
+                String filecontent = Files.readString(file.toPath());
+                JsonArray jsonObject = JsonParser.parseString(filecontent).getAsJsonArray();
+                List<JsonElement> allArticles = jsonObject.getAsJsonArray().asList();
+                for (JsonElement article : allArticles) {
+                    // use gson mapper to deserialize
+                    RagDocument rd = gson.fromJson(article, RagDocument.class);
+
+                    documents.add(rd);
+                    count++;
+
+                }
+            } catch (JsonSyntaxException e) {
+                LOGGER.error("Error while deserializing document at position {} from file {}", count, file.getName(), e);
+            }
+            catch (IOException e) {
+                LOGGER.error("Error while reading file {}", file.getName(), e);
+            }
+            catch (Exception e) {
+                LOGGER.error("Error while reading file {}", file.getName(), e);
+            }
+        }
+        LOGGER.info("{} documents have been extracted from folder {}",count,folder.getName());
+        return documents;
+    }
+
+    private List<RagDocument> getRagDocumentsFromTxt(RagFolder folderPath, File folder) {
+        FilenameFilter filter = (dir, name) -> name.endsWith(".txt");
+        File[] files = folder.listFiles(filter);
+        List<RagDocument> documents = new ArrayList<>();
+
+        if (files == null || files.length == 0) {
+            LOGGER.warn("{} contains no text File.", folder.getName());
+            return documents;
+        }
+
+        int count = 0;
+        for (File file : files) {
+            try {
+                List<String> content = Files.readAllLines(file.toPath());
                 String name = file.getName();
                 String path = file.getPath();
                 documents.add(new RagDocument(name, path, content));
@@ -116,15 +173,22 @@ public class EmbeddingService {
 
     private void embedAndStoreDocuments(EmbeddingStore<TextSegment> store, EmbeddingModel model,
                                         RagDocument ragDocumentdocument) {
-        Map<String, String> metas = Map.of("url", ragDocumentdocument.getUrl(), "title", ragDocumentdocument.getTitle());
+        Map<String, String> metas = Map.of(
+                "url", ragDocumentdocument.getUrl(),
+                "title", ragDocumentdocument.getTitle(),
+                "datetime",ragDocumentdocument.getDatetime(),
+                "keywords", String.join(", ", ragDocumentdocument.getKeywords()));
 
-        Document document = new Document(ragDocumentdocument.getContent(), new Metadata(metas));
+        // Join with double lineSeparator (\n\n) in order to leverage DocumentByParagraphSplitter
+        String content = String.join(System.lineSeparator()+System.lineSeparator(), ragDocumentdocument.getContent());
 
-        DocumentSplitter splitter = new DocumentByParagraphSplitter(1000, 50);
+        Document document = new Document(content, new Metadata(metas));
+        DocumentSplitter splitter = new DocumentByParagraphSplitter(800, 50);
 
         List<TextSegment> segments = splitter.split(document);
         List<Embedding> embeddings = model.embedAll(segments).content();
         store.addAll(embeddings, segments);
+        LOGGER.info("document {} has been stored as {} chunks",ragDocumentdocument.getUrl(),segments.size());
     }
 
 }
