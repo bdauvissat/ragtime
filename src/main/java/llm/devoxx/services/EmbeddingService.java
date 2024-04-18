@@ -91,7 +91,7 @@ public class EmbeddingService {
 
     }
 
-    private Collection<? extends RagDocument> getRagDocumentsFromJson(File folder) {
+    private List<RagDocument> getRagDocumentsFromJson(File folder) {
         FilenameFilter filter = (dir, name) -> name.endsWith(".json");
         File[] files = folder.listFiles(filter);
 
