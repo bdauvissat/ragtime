@@ -63,7 +63,7 @@ public class Tools {
 
     private ElasticsearchEmbeddingStore store;
 
-    private EmbeddingModel embeddingModel;
+    //private EmbeddingModel embeddingModel;
 
     @PostConstruct
     public void initialize() {
@@ -75,7 +75,7 @@ public class Tools {
                 .build();
                 LOGGER.info("Elasticsearch Indexing Client OK on {}",elasticUrl);
         
-        embeddingModel = new OllamaEmbeddingModel(ollamaUrl, ollamaModel, Duration.ofSeconds(ollamaDuration),ollamaRetry);
+        //embeddingModel = new OllamaEmbeddingModel(ollamaUrl, ollamaModel, Duration.ofSeconds(ollamaDuration),ollamaRetry);
     }
 
     
@@ -104,9 +104,9 @@ public class Tools {
 
     }
 
-    public EmbeddingModel createEmbeddingModel() {
-        return embeddingModel;
-    }
+   // public EmbeddingModel createEmbeddingModel() {
+   //     return embeddingModel;
+   // }
 
     public LanguageModel createLanguageModel() {
         return getLanguageModelBuilder()
