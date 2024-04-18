@@ -45,12 +45,8 @@ public class EmbeddingService {
     // ElasticsearchEmbeddingStore embeddingStore = tools.getStore();
 
     public void embedDocument(RagDocument documentRequest) {
-
         ElasticsearchEmbeddingStore store = tools.getStore();
-        EmbeddingModel embeddingModel = tools.createEmbeddingModel();
-
         embedAndStoreDocuments(store, embeddingModel, documentRequest);
-
     }
 
     public void embeddFolder(RagFolder folderPath) {
