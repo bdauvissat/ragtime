@@ -1,5 +1,10 @@
 # RAGtime : Discuter avec vos propres données
 
+## Slides
+
+[Les slides sont ici](
+https://docs.google.com/presentation/d/e/2PACX-1vQnCn16AyyVsNi8j8HRVEbN_NfApUTYrOQ8fffdxrS0IzjpreQ6wFoD8ZTby373Re9aM1NPGKGoa4s9/pub).
+
 ## Installation des prérequis (obligatoire)
 
 Ce workshop, [présenté à Devoxx FR](https://www.devoxx.fr/schedule/talk/?id=29366), nécessite un certain nombre de prérequis que vous ne pourrez pas installer en début de séance à cause de leur taille. **Merci donc de suivre la procédure suivante avant d’arriver au workshop.**
