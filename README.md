@@ -95,3 +95,5 @@ mvn quarkus:dev
 
 La console de développement de Quarkus est alors disponible sur [http://localhost:8080/q/dev/](http://localhost:8080/q/dev/)
 
+### Documents à indexer
+le fichier json est à télécharger ici: https://drive.google.com/file/d/15eqcNCnb3igxGGt7d1qEXEsUM9nQwaXn/view?usp=sharing
