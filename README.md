@@ -104,3 +104,10 @@ La console de développement de Quarkus est alors disponible sur [http://localho
 le fichier json est à télécharger ici: https://drive.google.com/file/d/15eqcNCnb3igxGGt7d1qEXEsUM9nQwaXn/view?usp=sharing
 
 (source: https://www.theregister.com/)
+
+## Pour aller plus loin
+
+2 modeles disponibles sur Ollama qui sont intéressants à tester. N'oubliez pas que le modele pour faire les embeddings (des documents indexés et des questions posées) est indépendant du modele de génération des réponses (à partir du prompt et du contexte injecté). Il peut donc etre interéssant d'utiliser un modele spécialisé sur chacune des taches. 
+- `nomic-embed-text:latest` (0.25 GB) pour faire les embeddings (property `quarkus.langchain4j.ollama.embedding-model.model-id`)
+- `wizardlm2:7b` (4.1 GB) pour le modele de génération / question answering (properties `ollama.model` et `quarkus.langchain4j.ollama.chat-model.model-id`)
+Vous pouvez donc faire un `ollama pull` de ces modeles et les renseigner dans les properties pour les tester. 
