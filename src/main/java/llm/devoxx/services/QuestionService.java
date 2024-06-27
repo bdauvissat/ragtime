@@ -161,13 +161,13 @@ public class QuestionService {
                 .contentInjector(contentInjector)
                 .build();
 
-        DocumentChat toto = AiServices.builder(DocumentChat.class)
+        DocumentChat chat = AiServices.builder(DocumentChat.class)
                 .chatLanguageModel(chatModel)
                 .retrievalAugmentor(retrievalAugmentor)
                 .chatMemory(chatMemory)
                 .build();
 
-        String reponse = toto.answer(question.getQuestion());
+        String reponse = chat.answer(question.getQuestion());
 
 
 

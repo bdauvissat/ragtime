@@ -2,10 +2,8 @@ package llm.devoxx.util;
 
 import co.elastic.clients.transport.TransportUtils;
 import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.language.LanguageModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
-import dev.langchain4j.model.ollama.OllamaEmbeddingModel;
 import dev.langchain4j.model.ollama.OllamaLanguageModel;
 import dev.langchain4j.store.embedding.elasticsearch.ElasticsearchEmbeddingStore;
 import jakarta.annotation.PostConstruct;
@@ -36,6 +34,12 @@ public class Tools {
 
     @ConfigProperty(name = "elastic.password")
     Optional<String> elasticPassword;
+
+    @ConfigProperty(name = "elastic.cloud.username")
+    Optional<String> elasticCloudUsername;
+
+    @ConfigProperty(name = "elastic.cloud.password")
+    Optional<String> elasticCloudPassword;
 
     @ConfigProperty(name = "elastic.url")
     String elasticUrl;
@@ -90,7 +94,8 @@ public class Tools {
         RestClientBuilder builder = RestClient.builder(HttpHost.create(elasticUrl));
         if (elasticUsername.isPresent() && elasticPassword.isPresent()) {
             BasicCredentialsProvider creds = new BasicCredentialsProvider();
-            creds.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(elasticUsername.get(), elasticPassword.get()));
+            creds.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(elasticUsername.get(),
+                    elasticPassword.get()));
             builder.setHttpClientConfigCallback(ccb -> {
                 if (fingerprint.isPresent()) {
                     ccb.setSSLContext(context).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);

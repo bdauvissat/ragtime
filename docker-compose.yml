@@ -1,16 +1,16 @@
 version: "3.8"
 
 services:
-  ollama:
-    image: ollama/ollama
-    container_name: ollama-devoxx
-    volumes:
-      - devoxx-ollama:/root/.ollama
-    ports:
-      - 11434:11434
-    environment:
-      - OLLAMA_HOST=0.0.0.0
-      - OLLAMA_ORIGINS=*
+#  ollama:
+#    image: ollama/ollama
+#    container_name: ollama-devoxx
+#    volumes:
+#      - devoxx-ollama:/root/.ollama
+#    ports:
+#      - 11434:11434
+#    environment:
+#      - OLLAMA_HOST=0.0.0.0
+#      - OLLAMA_ORIGINS=*
   setup:
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     volumes:
