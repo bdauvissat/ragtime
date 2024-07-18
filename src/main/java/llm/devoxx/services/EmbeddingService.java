@@ -14,6 +14,7 @@ import jakarta.inject.Inject;
 import llm.devoxx.json.RagDocument;
 import llm.devoxx.json.RagFolder;
 import llm.devoxx.util.Tools;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 @ApplicationScoped
+@Slf4j
 public class EmbeddingService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmbeddingService.class);
     @Inject
     Tools tools;
 
@@ -68,7 +69,7 @@ public class EmbeddingService {
 
         if (!folder.exists() || !folder.isDirectory()) {
 
-            LOGGER.error("{} does not exist or is not a directory", folder.getName());
+            log.error("{} does not exist or is not a directory", folder.getName());
 
             return null;
         }
@@ -79,7 +80,7 @@ public class EmbeddingService {
         File[] files = folder.listFiles(filter);
 
         if (files == null || files.length == 0) {
-            LOGGER.error("{} is emtpy", folder.getName());
+            log.error("{} is emtpy", folder.getName());
             return null;
         }
 
@@ -101,7 +102,7 @@ public class EmbeddingService {
                 }
 
             } catch (IOException e) {
-                LOGGER.error("Error while reading file {}", file.getName(), e);
+                log.error("Error while reading file {}", file.getName(), e);
             }
 
         }

@@ -16,15 +16,14 @@ import llm.devoxx.json.CompleteAnswer;
 import llm.devoxx.json.Question;
 import llm.devoxx.util.Constants;
 import llm.devoxx.util.Tools;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
+@Slf4j
 public class QuestionService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(QuestionService.class);
     @Inject
     Tools tools;
 
@@ -42,14 +41,14 @@ public class QuestionService {
 
         LanguageModel languageModel = tools.createLanguageModel();
 
-        Embedding queryEmbedded = embeddingModel.embed(question.getQuestion()).content();
+        Embedding queryEmbedded = embeddingModel.embed(question.getAskedQuestion()).content();
 
         List<EmbeddingMatch<TextSegment>> relevant = store.findRelevant(queryEmbedded,3, 0.55);
 
         List<Answer> answers = new ArrayList<>();
 
-        StringBuilder rep = new StringBuilder(question.getQuestion());
-        LOGGER.info("Generating answer for question: \"{}\"", question.getQuestion());
+        StringBuilder rep = new StringBuilder(question.getAskedQuestion());
+        log.info("Generating answer for question: \"{}\"", question.getAskedQuestion());
         for (var rel : relevant) {
             answers.add(new Answer(rel.embedded().text(), rel.score(), rel.embedded().metadata()));
 
@@ -76,7 +75,7 @@ public class QuestionService {
 //        List<EmbeddingMatch<TextSegment>> relevant = store.findRelevant(queryEmbedded,3, 0.55);
 //
 //        List<Answer> answers = new ArrayList<>();
-//        LOGGER.info("Generating chat answer for question: \"{}\"", question.getQuestion());
+//        log.info("Generating chat answer for question: \"{}\"", question.getQuestion());
 //        for (var rel : relevant) {
 //            answers.add(new Answer(rel.embedded().text(), rel.score(), rel.embedded().metadata()));
 //
@@ -163,7 +162,7 @@ public class QuestionService {
 //
 //        List<Answer> answers = new ArrayList<>();
 //        List<ChatMessage> messages = new ArrayList<>();
-//        LOGGER.info("Generating chat answer for question: \"{}\"", question.getQuestion());
+//        log.info("Generating chat answer for question: \"{}\"", question.getQuestion());
 //        for (var rel : relevant) {
 //            answers.add(new Answer(rel.embedded().text(), rel.score(), rel.embedded().metadata()));
 //            messages.add(AiMessage.from(rel.embedded().text()));

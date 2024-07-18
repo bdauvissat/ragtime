@@ -1,5 +1,12 @@
 package llm.devoxx.json;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TestJson {
 
     private String topic;
@@ -7,37 +14,4 @@ public class TestJson {
     private int nbLines;
 
     private String answerLanguage;
-
-    public TestJson() {
-    }
-
-    public TestJson(String topic, int nbLines, String answerLanguage) {
-        this.topic = topic;
-        this.nbLines = nbLines;
-        this.answerLanguage = answerLanguage;
-    }
-
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
-    public int getNbLines() {
-        return nbLines;
-    }
-
-    public void setNbLines(int nbLines) {
-        this.nbLines = nbLines;
-    }
-
-    public String getAnswerLanguage() {
-        return answerLanguage;
-    }
-
-    public void setAnswerLanguage(String answerLanguage) {
-        this.answerLanguage = answerLanguage;
-    }
 }

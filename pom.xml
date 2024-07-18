@@ -71,8 +71,15 @@
             <artifactId>langchain4j-elasticsearch</artifactId>
             <version>0.29.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.24</version>
+            <scope>provided</scope>
+        </dependency>
 
-<!--        Dépendances des librairies spécifiques Quarkus - Langchain4J-->
+
+        <!--        Dépendances des librairies spécifiques Quarkus - Langchain4J-->
 
         <dependency>
             <groupId>io.quarkiverse.langchain4j</groupId>
