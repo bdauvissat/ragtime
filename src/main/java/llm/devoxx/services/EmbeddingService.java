@@ -15,9 +15,8 @@ import jakarta.inject.Inject;
 import llm.devoxx.json.RagDocument;
 import llm.devoxx.json.RagFolder;
 import llm.devoxx.util.Tools;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -28,8 +27,8 @@ import java.util.List;
 import java.util.Map;
 
 @ApplicationScoped
+@Slf4j
 public class EmbeddingService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmbeddingService.class);
     @Inject
     Tools tools;
 
@@ -68,7 +67,7 @@ public class EmbeddingService {
 
         if (!folder.exists() || !folder.isDirectory()) {
 
-            LOGGER.error("{} does not exist or is not a directory", folder.getName());
+            log.error("{} does not exist or is not a directory", folder.getName());
 
             return null;
         }
@@ -91,7 +90,7 @@ public class EmbeddingService {
         File[] files = folder.listFiles(filter);
 
         if (files == null || files.length == 0) {
-            LOGGER.warn("{} contains no Json file !", folder.getName());
+            log.warn("{} contains no Json file !", folder.getName());
             return null;
         }
         int count = 0;
@@ -112,16 +111,13 @@ public class EmbeddingService {
 
                 }
             } catch (JsonSyntaxException e) {
-                LOGGER.error("Error while deserializing document at position {} from file {}", count, file.getName(), e);
-            }
-            catch (IOException e) {
-                LOGGER.error("Error while reading file {}", file.getName(), e);
+                log.error("Error while deserializing document at position {} from file {}", count, file.getName(), e);
             }
             catch (Exception e) {
-                LOGGER.error("Error while reading file {}", file.getName(), e);
+                log.error("Error while reading file {}", file.getName(), e);
             }
         }
-        LOGGER.info("{} documents have been extracted from folder {}",count,folder.getName());
+        log.info("{} documents have been extracted from folder {}",count,folder.getName());
         return documents;
     }
 
@@ -131,7 +127,7 @@ public class EmbeddingService {
         List<RagDocument> documents = new ArrayList<>();
 
         if (files == null || files.length == 0) {
-            LOGGER.warn("{} contains no text File.", folder.getName());
+            log.warn("{} contains no text File.", folder.getName());
             return documents;
         }
 
@@ -149,7 +145,7 @@ public class EmbeddingService {
                 }
 
             } catch (IOException e) {
-                LOGGER.error("Error while reading file {}", file.getName(), e);
+                log.error("Error while reading file {}", file.getName(), e);
             }
 
         }
@@ -173,7 +169,7 @@ public class EmbeddingService {
         List<TextSegment> segments = splitter.split(document);
         List<Embedding> embeddings = model.embedAll(segments).content();
         store.addAll(embeddings, segments);
-        LOGGER.info("document {} has been stored as {} chunks",ragDocumentdocument.getUrl(),segments.size());
+        log.info("document {} has been stored as {} chunks",ragDocumentdocument.getUrl(),segments.size());
     }
 
 }
