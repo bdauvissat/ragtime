@@ -1,10 +1,14 @@
 package llm.devoxx.services;
 
 import dev.langchain4j.data.embedding.Embedding;
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.input.Prompt;
+import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.model.language.LanguageModel;
 import dev.langchain4j.model.output.Response;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
@@ -19,7 +23,10 @@ import llm.devoxx.util.Tools;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 @Slf4j
@@ -63,46 +70,48 @@ public class QuestionService {
 
         return new CompleteAnswer(Constants.EMPTY_STRING, answers);
     }
-//
-//    public CompleteAnswer chatWithDocs(Question question) {
-//
-//        EmbeddingStore<TextSegment> store = tools.getStore();
-//
-//        ChatLanguageModel chatModel = tools.createChatModel();
-//
-//        Embedding queryEmbedded = embeddingModel.embed(question.getQuestion()).content();
-//
-//        List<EmbeddingMatch<TextSegment>> relevant = store.findRelevant(queryEmbedded,3, 0.55);
-//
-//        List<Answer> answers = new ArrayList<>();
-//        log.info("Generating chat answer for question: \"{}\"", question.getQuestion());
-//        for (var rel : relevant) {
-//            answers.add(new Answer(rel.embedded().text(), rel.score(), rel.embedded().metadata()));
-//
-//        }
-//
-//        PromptTemplate promptTemplate = PromptTemplate.from(
-//                "Answer the following question :\n"
-//                        + "\n"
-//                        + "Question:\n"
-//                        + "{{question}}\n"
-//                        + "\n"
-//                        + "Base your answer on the following information:\n"
-//                        + "{{information}}"
-//        );
-//
-//        String information = relevant.stream().map(r -> r.embedded().text()).collect(Collectors.joining("\n\n"));
-//        Map<String, Object> parameters = new HashMap<>();
-//        parameters.put("question", question.getQuestion());
-//        parameters.put("information", information);
-//
-//        Prompt prompt = promptTemplate.apply(parameters);
-//
-//        AiMessage message = chatModel.generate(prompt.toUserMessage()).content();
-//
-//        return new CompleteAnswer(message.text(), answers);
-//
-//    }
+
+    public CompleteAnswer chatWithDocs(Question question) {
+
+        EmbeddingStore<TextSegment> store = tools.getStore();
+
+        ChatLanguageModel chatModel = tools.createChatModel();
+
+        Embedding queryEmbedded = embeddingModel.embed(question.getAskedQuestion()).content();
+
+        List<EmbeddingMatch<TextSegment>> relevant = store.findRelevant(queryEmbedded,3, 0.55);
+
+        List<Answer> answers = new ArrayList<>();
+        log.info("Generating chat answer for question: \"{}\"", question.getAskedQuestion());
+        for (var rel : relevant) {
+            answers.add(new Answer(rel.embedded().text(), rel.score(), rel.embedded().metadata()));
+
+        }
+
+        PromptTemplate promptTemplate = PromptTemplate.from(
+                """
+                        Answer the following question 
+                        
+                        Question:
+                        {{question}}
+                        
+                        Base your answer on the following information:
+                        {{information}}
+                        """
+        );
+
+        String information = relevant.stream().map(r -> r.embedded().text()).collect(Collectors.joining("\n\n"));
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("question", question.getAskedQuestion());
+        parameters.put("information", information);
+
+        Prompt prompt = promptTemplate.apply(parameters);
+
+        AiMessage message = chatModel.generate(prompt.toUserMessage()).content();
+
+        return new CompleteAnswer(message.text(), answers);
+
+    }
 //
 //    public CompleteAnswer chatWithDocsAndMemory(Question question) {
 //
