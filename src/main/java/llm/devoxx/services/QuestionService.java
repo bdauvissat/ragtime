@@ -32,8 +32,7 @@ import llm.devoxx.json.Question;
 import llm.devoxx.util.Constants;
 import llm.devoxx.util.DocumentChat;
 import llm.devoxx.util.Tools;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,15 +41,26 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
+@Slf4j
 public class QuestionService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(QuestionService.class);
 
     @Inject
     Tools tools;
 
     @Inject
     EmbeddingModel embeddingModel;
+
+    private final PromptTemplate promptTemplate = PromptTemplate.from(
+            """
+                    Answer the following question :
+                   
+                    Question:
+                    {{question}}
+                    
+                    Base your answer on the following information:
+                    {{information}}
+                    """
+    );
 
     private ChatMemory chatMemory = MessageWindowChatMemory.withMaxMessages(10);
 
@@ -67,7 +77,7 @@ public class QuestionService {
         List<Answer> answers = new ArrayList<>();
 
         StringBuilder rep = new StringBuilder(question.getQuestion());
-        LOGGER.info("Generating answer for question: \"{}\"", question.getQuestion());
+        log.info("Generating answer for question: \"{}\"", question.getQuestion());
         for (var rel : relevant) {
             answers.add(new Answer(rel.embedded().text(), rel.score(), rel.embedded().metadata()));
 
@@ -76,22 +86,8 @@ public class QuestionService {
         }
 
         if (question.isGenerateAnswer()) {
-
-            PromptTemplate template = PromptTemplate.from(
-                    "Answer the following question :\n"
-                        + "\n"
-                        + "Question:\n"
-                        + "{{question}}\n"
-                        + "\n"
-                        + "Base your answer on the following information:\n"
-                        + "{{information}}"
-            );
-
             String information = relevant.stream().map(rlv -> rlv.embedded().text()).collect(Collectors.joining("\n\n"));
-            Map<String, Object> templateParameters = new HashMap<>();
-            templateParameters.put("question", question.getQuestion());
-            templateParameters.put("information", information);
-            Prompt prompt = template.apply(templateParameters);
+            Prompt prompt = getPrompt(question, information);
 
             Response<String> generatedAnswer = languageModel.generate(prompt);
             return new CompleteAnswer(generatedAnswer.content(), answers);
@@ -101,7 +97,14 @@ public class QuestionService {
 
     }
 
-        public CompleteAnswer chatWithDocsAndMemory(Question question) {
+    private Prompt getPrompt(Question question, String information) {
+        Map<String, Object> templateParameters = new HashMap<>();
+        templateParameters.put("question", question.getQuestion());
+        templateParameters.put("information", information);
+        return promptTemplate.apply(templateParameters);
+    }
+
+    public CompleteAnswer chatWithDocsAndMemory(Question question) {
 
         EmbeddingStore<TextSegment> store = tools.getStore();
 
@@ -110,16 +113,6 @@ public class QuestionService {
         Embedding queryEmbedded = embeddingModel.embed(question.getQuestion()).content();
 
         List<EmbeddingMatch<TextSegment>> relevant = store.findRelevant(queryEmbedded,3, 0.55);
-
-        PromptTemplate promptTemplate = PromptTemplate.from(
-                "Answer the following question :\n"
-                        + "\n"
-                        + "Question:\n"
-                        + "{{question}}\n"
-                        + "\n"
-                        + "Base your answer on the following information:\n"
-                        + "{{information}}"
-        );
 
         List<Answer> answers = new ArrayList<>();
         StringBuilder info = new StringBuilder();
@@ -133,11 +126,7 @@ public class QuestionService {
         }
 
         String information = info.toString();
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("question", question.getQuestion());
-        parameters.put("information", information);
-
-        Prompt prompt = promptTemplate.apply(parameters);
+        Prompt prompt = getPrompt(question, information);
 
         QueryTransformer queryTransformer = new CompressingQueryTransformer(chatModel);
         Query query = Query.from(prompt.text(), new Metadata(UserMessage.from(prompt.text()), chatMemory.messages(),

@@ -77,12 +77,20 @@
             <artifactId>gson</artifactId>
         </dependency>
 
+
 <!--        Dépendances des librairies spécifiques Quarkus - Langchain4J-->
 
         <dependency>
             <groupId>io.quarkiverse.langchain4j</groupId>
             <artifactId>quarkus-langchain4j-ollama</artifactId>
             <version>0.10.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
