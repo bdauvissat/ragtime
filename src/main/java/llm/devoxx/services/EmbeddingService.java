@@ -15,9 +15,8 @@ import jakarta.inject.Inject;
 import llm.devoxx.json.RagDocument;
 import llm.devoxx.json.RagFolder;
 import llm.devoxx.util.Tools;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,8 +27,8 @@ import java.util.List;
 import java.util.Map;
 
 @ApplicationScoped
+@Slf4j
 public class EmbeddingService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmbeddingService.class);
     @Inject
     Tools tools;
 
@@ -61,7 +60,7 @@ public class EmbeddingService {
 
         if (!folder.exists() || !folder.isDirectory()) {
 
-            LOGGER.error("{} does not exist or is not a directory", folder.getName());
+            log.error("{} does not exist or is not a directory", folder.getName());
 
             return documents;
         }
@@ -69,7 +68,7 @@ public class EmbeddingService {
         try {
             documents = getRagDocuments(folderPath);
         } catch (IOException e) {
-            LOGGER.warn("Erreur lors de l'extraction des documents", e);
+            log.warn("Erreur lors de l'extraction des documents", e);
         }
 
         return documents;
@@ -78,7 +77,6 @@ public class EmbeddingService {
 
     private List<RagDocument> getRagDocuments(RagFolder folderPath) throws IOException {
         Path documentsPath = Paths.get(folderPath.getPath());
-
         List<RagDocument> documents = new ArrayList<>();
         Gson gson = new Gson();
         PathMatcher txtMatcher = FileSystems.getDefault().getPathMatcher("glob:*.txt");
@@ -86,7 +84,7 @@ public class EmbeddingService {
         Files.walkFileTree(documentsPath, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                LOGGER.debug("Visit {}", file);
+                log.debug("Visit {}", file);
                 if (txtMatcher.matches(file.getFileName())) {
                     List<String> content = Files.readAllLines(file);
                     String name = file.getFileName().toString();
@@ -109,7 +107,7 @@ public class EmbeddingService {
                 return super.visitFile(file, attrs);
             }
         });
-        LOGGER.info("{} documents have been extracted from folder {}",documents.size(),folderPath.getPath());
+        log.info("{} documents have been extracted from folder {}",documents.size(),folderPath.getPath());
         return documents;
     }
 
@@ -130,7 +128,7 @@ public class EmbeddingService {
         List<TextSegment> segments = splitter.split(document);
         List<Embedding> embeddings = model.embedAll(segments).content();
         store.addAll(embeddings, segments);
-        LOGGER.info("document {} has been stored as {} chunks",ragDocumentdocument.getUrl(),segments.size());
+        log.info("document {} has been stored as {} chunks",ragDocumentdocument.getUrl(),segments.size());
     }
 
 }
