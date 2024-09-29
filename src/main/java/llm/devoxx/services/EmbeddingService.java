@@ -19,9 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,9 +34,6 @@ public class EmbeddingService {
 
     @Inject
     EmbeddingModel embeddingModel;
-    
-    // why not @inject embeddingStore  or make it a singleton in store ???
-    // ElasticsearchEmbeddingStore embeddingStore = tools.getStore();
 
     public void embedDocument(RagDocument documentRequest) {
         ElasticsearchEmbeddingStore store = tools.getStore();
@@ -51,104 +48,66 @@ public class EmbeddingService {
             return;
         }
 
-        ElasticsearchEmbeddingStore store = tools.getStore();
-        //EmbeddingModel embeddingModel = tools.createEmbeddingModel();
+        documents.forEach(doc ->  embedAndStoreDocuments(tools.getStore(), embeddingModel, doc));
 
-        for (RagDocument doc : documents) {
-
-            embedAndStoreDocuments(store, embeddingModel, doc);
-
-        }
 
     }
 
     private List<RagDocument> getAllDocuments(RagFolder folderPath) {
         File folder = new File(folderPath.getPath());
 
+        List<RagDocument> documents = new ArrayList<>();
+
         if (!folder.exists() || !folder.isDirectory()) {
 
             log.error("{} does not exist or is not a directory", folder.getName());
 
-            return null;
-        }
-
-        // txt files are computed
-        List<RagDocument> documents = getRagDocumentsFromTxt(folderPath, folder);
- //       if (documents == null)
- //           documents = new ArrayList<RagDocument>();
-        documents.addAll(getRagDocumentsFromJson(folder));
-        if (CollectionUtils.isEmpty(documents)) {
-            return null;
-        }
-
-        return documents;
-
-    }
-
-    private List<RagDocument> getRagDocumentsFromJson(File folder) {
-        FilenameFilter filter = (dir, name) -> name.endsWith(".json");
-        File[] files = folder.listFiles(filter);
-
-        if (files == null || files.length == 0) {
-            log.warn("{} contains no Json file !", folder.getName());
-            return null;
-        }
-        int count = 0;
-        List<RagDocument> documents = new ArrayList<>();
-        Gson gson = new Gson();
-        for (File file : files) {
-
-            try {
-                String filecontent = Files.readString(file.toPath());
-                JsonArray jsonObject = JsonParser.parseString(filecontent).getAsJsonArray();
-                List<JsonElement> allArticles = jsonObject.getAsJsonArray().asList();
-                for (JsonElement article : allArticles) {
-                    // use gson mapper to deserialize 
-                    RagDocument rd = gson.fromJson(article, RagDocument.class);
- 
-                    documents.add(rd);
-                    count++;
-
-                }
-            } catch (JsonSyntaxException e) {
-                log.error("Error while deserializing document at position {} from file {}", count, file.getName(), e);
-            }
-            catch (Exception e) {
-                log.error("Error while reading file {}", file.getName(), e);
-            }
-        }
-        log.info("{} documents have been extracted from folder {}",count,folder.getName());
-        return documents;
-    }
-
-    private List<RagDocument> getRagDocumentsFromTxt(RagFolder folderPath, File folder) {
-        FilenameFilter filter = (dir, name) -> name.endsWith(".txt");
-        File[] files = folder.listFiles(filter);
-        List<RagDocument> documents = new ArrayList<>();
-
-        if (files == null || files.length == 0) {
-            log.warn("{} contains no text File.", folder.getName());
             return documents;
         }
 
-        int count = 0;
-        for (File file : files) {
-            try {
-                List<String> content = Files.readAllLines(file.toPath());
-                String name = file.getName();
-                String path = file.getPath();
-                documents.add(new RagDocument(name, path, content));
-                count++;
-
-                if (folderPath.getLimit() > 0 && count >= folderPath.getLimit()) {
-                    break;
-                }
-
-            } catch (IOException e) {
-                log.error("Error while reading file {}", file.getName(), e);
-            }
-
+        try {
+            documents = getRagDocuments(folderPath);
+        } catch (IOException e) {
+            log.warn("Erreur lors de l'extraction des documents", e);
         }
+
+        return documents;
+
+    }
+
+    private List<RagDocument> getRagDocuments(RagFolder folderPath) throws IOException {
+        Path documentsPath = Paths.get(folderPath.getPath());
+        List<RagDocument> documents = new ArrayList<>();
+        Gson gson = new Gson();
+        PathMatcher txtMatcher = FileSystems.getDefault().getPathMatcher("glob:*.txt");
+        PathMatcher jsonMatcher = FileSystems.getDefault().getPathMatcher("glob:*.json");
+        Files.walkFileTree(documentsPath, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                log.debug("Visit {}", file);
+                if (txtMatcher.matches(file.getFileName())) {
+                    List<String> content = Files.readAllLines(file);
+                    String name = file.getFileName().toString();
+                    String path = file.toString();
+                    documents.add(new RagDocument(name, path, content));
+                }
+                if (jsonMatcher.matches(file.getFileName())) {
+                    String filecontent = Files.readString(file);
+                    JsonArray jsonObject = JsonParser.parseString(filecontent).getAsJsonArray();
+                    List<JsonElement> allArticles = jsonObject.getAsJsonArray().asList();
+                    for (JsonElement article : allArticles) {
+                        // use gson mapper to deserialize
+                        RagDocument rd = gson.fromJson(article, RagDocument.class);
+                        documents.add(rd);
+                    }
+                }
+                if (folderPath.getLimit() > 0 && documents.size() >= folderPath.getLimit()) {
+                    return FileVisitResult.TERMINATE;
+                }
+                return super.visitFile(file, attrs);
+            }
+        });
+        log.info("{} documents have been extracted from folder {}",documents.size(),folderPath.getPath());
         return documents;
     }
 
