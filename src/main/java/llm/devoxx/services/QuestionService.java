@@ -8,6 +8,8 @@ import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.model.language.LanguageModel;
 import dev.langchain4j.model.output.Response;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
+import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
+import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -16,8 +18,7 @@ import llm.devoxx.json.CompleteAnswer;
 import llm.devoxx.json.Question;
 import llm.devoxx.util.Constants;
 import llm.devoxx.util.Tools;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,9 +27,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
+@Slf4j
 public class QuestionService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(QuestionService.class);
 
     @Inject
     Tools tools;
@@ -44,29 +44,35 @@ public class QuestionService {
 
         Embedding queryEmbedded = embeddingModel.embed(question.getQuestion()).content();
 
-        List<EmbeddingMatch<TextSegment>> relevant = store.findRelevant(queryEmbedded,3, 0.55);
+        EmbeddingSearchResult<TextSegment> docs = store.search(EmbeddingSearchRequest.builder()
+                .queryEmbedding(queryEmbedded)
+                .build());
+
+        List<EmbeddingMatch<TextSegment>> relevant = docs.matches();
+
+        relevant.sort((o1, o2) -> o2.score().compareTo(o1.score()));
 
         List<Answer> answers = new ArrayList<>();
 
-        StringBuilder rep = new StringBuilder(question.getQuestion());
-        LOGGER.info("Generating answer for question: \"{}\"", question.getQuestion());
+        log.info("Generating answer for question: \"{}\"", question.getQuestion());
         for (var rel : relevant) {
             answers.add(new Answer(rel.embedded().text(), rel.score(), rel.embedded().metadata()));
 
-            rep.append(System.lineSeparator());
-            rep.append(rel.embedded().text());
         }
+
+        log.info("Generating answer for question: \"{}\"", question.getQuestion());
 
         if (question.isGenerateAnswer()) {
 
             PromptTemplate template = PromptTemplate.from(
-                    "Answer the following question :\n"
-                        + "\n"
-                        + "Question:\n"
-                        + "{{question}}\n"
-                        + "\n"
-                        + "Base your answer on the following information:\n"
-                        + "{{information}}"
+                    """
+                            Answer the following question :
+                            
+                            Question:
+                            {{question}}
+                            
+                            Base your answer on the following information:
+                            {{information}}"""
             );
 
             String information = relevant.stream().map(rlv -> rlv.embedded().text()).collect(Collectors.joining("\n\n"));
