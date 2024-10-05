@@ -1,4 +1,4 @@
-package llm.devoxx.resource;
+package llm.adelean.resource;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -6,9 +6,9 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import llm.devoxx.json.RagDocument;
-import llm.devoxx.json.RagFolder;
-import llm.devoxx.services.EmbeddingService;
+import llm.adelean.json.RagDocument;
+import llm.adelean.json.RagFolder;
+import llm.adelean.services.EmbeddingService;
 
 @Path(("/embed"))
 public class EmbeddResource {

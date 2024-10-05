@@ -1,4 +1,4 @@
-package llm.devoxx.services;
+package llm.adelean.services;
 
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
@@ -11,11 +11,11 @@ import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import llm.devoxx.json.Answer;
-import llm.devoxx.json.CompleteAnswer;
-import llm.devoxx.json.Question;
-import llm.devoxx.util.Constants;
-import llm.devoxx.util.Tools;
+import llm.adelean.json.Answer;
+import llm.adelean.json.CompleteAnswer;
+import llm.adelean.json.Question;
+import llm.adelean.util.Constants;
+import llm.adelean.util.Tools;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package llm.devoxx.json;
+package llm.adelean.json;
 
 public class RagFolder {
 

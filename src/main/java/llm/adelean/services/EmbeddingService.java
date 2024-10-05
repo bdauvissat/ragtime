@@ -1,4 +1,4 @@
-package llm.devoxx.services;
+package llm.adelean.services;
 
 import com.google.gson.*;
 import dev.langchain4j.data.document.Document;
@@ -12,9 +12,9 @@ import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.elasticsearch.ElasticsearchEmbeddingStore;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import llm.devoxx.json.RagDocument;
-import llm.devoxx.json.RagFolder;
-import llm.devoxx.util.Tools;
+import llm.adelean.json.RagDocument;
+import llm.adelean.json.RagFolder;
+import llm.adelean.util.Tools;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 
