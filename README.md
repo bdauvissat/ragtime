@@ -53,10 +53,10 @@ docker compose up ollama
 Une fois lancé, chargez le modèle avec
 
 ```
-docker exec -it ollama-devoxx ollama pull gemma:2b
+docker exec -it ollama-adelean ollama pull gemma:2b
 ```
 
-Pour discuter avec le modèle, lancez `docker exec -it ollama-devoxx ollama run gemma:2b` et dites quelque chose, par exemple "Bonjour, comment vas-tu ?"
+Pour discuter avec le modèle, lancez `docker exec -it ollama-adelean ollama run gemma:2b` et dites quelque chose, par exemple "Bonjour, comment vas-tu ?"
 
 </details>
 
