@@ -1,4 +1,4 @@
-package llm.devoxx.services;
+package llm.adelean.services;
 
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;

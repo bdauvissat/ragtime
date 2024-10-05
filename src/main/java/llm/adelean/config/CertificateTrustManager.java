@@ -1,4 +1,4 @@
-package llm.devoxx.config;
+package llm.adelean.config;
 
 import javax.net.ssl.X509TrustManager;
 import java.security.cert.CertificateException;
