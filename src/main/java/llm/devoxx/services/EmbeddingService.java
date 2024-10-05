@@ -1,11 +1,6 @@
 package llm.devoxx.services;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-
+import com.google.gson.*;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.Metadata;
@@ -20,29 +15,27 @@ import jakarta.inject.Inject;
 import llm.devoxx.json.RagDocument;
 import llm.devoxx.json.RagFolder;
 import llm.devoxx.util.Tools;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @ApplicationScoped
+@Slf4j
 public class EmbeddingService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmbeddingService.class);
     @Inject
     Tools tools;
 
     @Inject
     EmbeddingModel embeddingModel;
-
-    // why not @inject embeddingStore  or make it a singleton in store ???
-    // ElasticsearchEmbeddingStore embeddingStore = tools.getStore();
 
     public void embedDocument(RagDocument documentRequest) {
         ElasticsearchEmbeddingStore store = tools.getStore();
@@ -57,31 +50,25 @@ public class EmbeddingService {
             return;
         }
 
-        ElasticsearchEmbeddingStore store = tools.getStore();
-        //EmbeddingModel embeddingModel = tools.createEmbeddingModel();
-
-        for (RagDocument doc : documents) {
-
-            embedAndStoreDocuments(store, embeddingModel, doc);
-
-        }
+        documents.forEach(doc -> embedAndStoreDocuments(tools.getStore(), embeddingModel, doc));
 
     }
 
     private List<RagDocument> getAllDocuments(RagFolder folderPath) {
         File folder = new File(folderPath.getPath());
 
+        List<RagDocument> documents = new ArrayList<>();
+
         if (!folder.exists() || !folder.isDirectory()) {
 
-            LOGGER.error("{} does not exist or is not a directory", folder.getName());
+            log.error("{} does not exist or is not a directory", folder.getName());
 
-            return null;
+            return documents;
         }
 
         // txt files are computed
-        List<RagDocument> documents = getRagDocumentsFromTxt(folderPath, folder);
- //       if (documents == null)
- //           documents = new ArrayList<RagDocument>();
+        documents = getRagDocumentsFromTxt(folderPath, folder);
+        // and also json files
         documents.addAll(getRagDocumentsFromJson(folder));
         if (CollectionUtils.isEmpty(documents)) {
             return null;
@@ -96,8 +83,8 @@ public class EmbeddingService {
         File[] files = folder.listFiles(filter);
 
         if (files == null || files.length == 0) {
-            LOGGER.warn("{} contains no Json file !", folder.getName());
-            return null;
+            log.warn("{} contains no Json file !", folder.getName());
+            return new ArrayList<>();
         }
         int count = 0;
         List<RagDocument> documents = new ArrayList<>();
@@ -117,16 +104,13 @@ public class EmbeddingService {
 
                 }
             } catch (JsonSyntaxException e) {
-                LOGGER.error("Error while deserializing document at position {} from file {}", count, file.getName(), e);
-            }
-            catch (IOException e) {
-                LOGGER.error("Error while reading file {}", file.getName(), e);
+                log.error("Error while deserializing document at position {} from file {}", count, file.getName(), e);
             }
             catch (Exception e) {
-                LOGGER.error("Error while reading file {}", file.getName(), e);
+                log.error("Error while reading file {}", file.getName(), e);
             }
         }
-        LOGGER.info("{} documents have been extracted from folder {}",count,folder.getName());
+        log.info("{} documents have been extracted from folder {}",count,folder.getName());
         return documents;
     }
 
@@ -136,17 +120,22 @@ public class EmbeddingService {
         List<RagDocument> documents = new ArrayList<>();
 
         if (files == null || files.length == 0) {
-            LOGGER.warn("{} contains no text File.", folder.getName());
+            log.warn("{} contains no text File.", folder.getName());
             return documents;
         }
 
         int count = 0;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         for (File file : files) {
             try {
                 List<String> content = Files.readAllLines(file.toPath());
                 String name = file.getName();
                 String path = file.getPath();
-                documents.add(new RagDocument(name, path, content));
+                RagDocument doc = new RagDocument(name, path, content);
+                String dateTime = LocalDate.now().format(formatter);
+                doc.setDatetime(dateTime);
+                doc.setKeywords(List.of("Fichier"));
+                documents.add(doc);
                 count++;
 
                 if (folderPath.getLimit() > 0 && count >= folderPath.getLimit()) {
@@ -154,13 +143,9 @@ public class EmbeddingService {
                 }
 
             } catch (IOException e) {
-                LOGGER.error("Error while reading file {}", file.getName(), e);
+                log.error("Error while reading file {}", file.getName(), e);
             }
 
-        }
-
-        if (CollectionUtils.isEmpty(documents)) {
-            return null;
         }
 
         return documents;
@@ -184,7 +169,7 @@ public class EmbeddingService {
         List<TextSegment> segments = splitter.split(document);
         List<Embedding> embeddings = model.embedAll(segments).content();
         store.addAll(embeddings, segments);
-        LOGGER.info("document {} has been stored as {} chunks",ragDocumentdocument.getUrl(),segments.size());
+        log.info("document {} has been stored as {} chunks",ragDocumentdocument.getUrl(),segments.size());
     }
 
 }
