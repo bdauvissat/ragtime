@@ -1,12 +1,12 @@
-package llm.devoxx.resource;
+package llm.adelean.resource;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import llm.devoxx.json.ChatQuery;
-import llm.devoxx.services.ChatService;
+import llm.adelean.json.ChatQuery;
+import llm.adelean.services.ChatService;
 
 @Path("/chat")
 public class ChatResource {

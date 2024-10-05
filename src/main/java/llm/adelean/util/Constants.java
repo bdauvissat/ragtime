@@ -1,4 +1,4 @@
-package llm.devoxx.util;
+package llm.adelean.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
