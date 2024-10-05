@@ -2,7 +2,7 @@
 
 ## Installation des prérequis (obligatoire)
 
-Ce workshop, [présenté à Devoxx FR](https://www.devoxx.fr/schedule/talk/?id=29366), nécessite un certain nombre de prérequis que vous ne pourrez pas installer en début de séance à cause de leur taille. **Merci donc de suivre la procédure suivante avant d’arriver au workshop.**
+Ce workshop, présenté à [Devoxx FR 2024](https://www.devoxx.fr/schedule/talk/?id=29366) et lors du [Volcamp 2024](https://www.volcamp.io/talks/24d1t4s7) nécessite un certain nombre de prérequis que vous ne pourrez pas installer en début de séance à cause de leur taille. **Merci donc de suivre la procédure suivante avant d’arriver au workshop.**
 
 En cas d’affluence, les animateurs du workshop se réservent le droit de donner la priorité aux participants qui auront installé les prérequis.
 
@@ -23,30 +23,6 @@ Assurez-vous d'avoir Java 17 ou plus installé et soit :
   ```
   ./mvnw dependency:resolve
   ```
-
-### Docker et images
-
-Assurez-vous que [Docker](https://www.docker.com/products/docker-desktop/) et sa ligne de commande sont installés.
-
-Chargez les images Docker en exécutant :
-
-```
-docker compose pull
-```
-
-<details>
-  <summary>Tester l'installation de Elasticsearch et Kibana</summary>
-  <blockquote>
-  Pour lancer Elasticsearch et Kibana, executez la commande :
-
-  ```
-  docker compose up devoxx-kibana
-  ```
-
-Connectez-vous ensuite à [http://localhost:5601](http://localhost:5601) avec le login `elastic` et le mot de passe `elasticpwd`.
-  </blockquote>
-</details>
-
 
 ### Ollama
 
