@@ -35,6 +35,7 @@ import llm.adelean.util.Constants;
 import llm.adelean.util.DocumentChat;
 import llm.adelean.util.Tools;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,15 +73,7 @@ public class QuestionService {
 
         LanguageModel languageModel = tools.createLanguageModel();
 
-        Embedding queryEmbedded = embeddingModel.embed(question.getQuestion()).content();
-
-        EmbeddingSearchResult<TextSegment> docs = store.search(EmbeddingSearchRequest.builder()
-                .queryEmbedding(queryEmbedded)
-                .build());
-
-        List<EmbeddingMatch<TextSegment>> relevant = docs.matches();
-
-        relevant.sort((o1, o2) -> o2.score().compareTo(o1.score()));
+        List<EmbeddingMatch<TextSegment>> relevant = getEmbeddingMatches(question, store);
 
         List<Answer> answers = new ArrayList<>();
 
@@ -93,15 +86,18 @@ public class QuestionService {
         log.info("Generating answer for question: \"{}\"", question.getQuestion());
 
         if (question.isGenerateAnswer()) {
+
             String information = relevant.stream().map(rlv -> rlv.embedded().text()).collect(Collectors.joining("\n\n"));
-            Prompt prompt = getPrompt(question, information);
+            Map<String, Object> templateParameters = new HashMap<>();
+            templateParameters.put("question", question.getQuestion());
+            templateParameters.put("information", information);
+            Prompt prompt = promptTemplate.apply(templateParameters);
 
             Response<String> generatedAnswer = languageModel.generate(prompt);
             return new CompleteAnswer(generatedAnswer.content(), answers);
         }
 
         return new CompleteAnswer(Constants.EMPTY_STRING, answers);
-
     }
 
     private Prompt getPrompt(Question question, String information) {
@@ -117,9 +113,7 @@ public class QuestionService {
 
         ChatLanguageModel chatModel = tools.createChatModel();
 
-        Embedding queryEmbedded = embeddingModel.embed(question.getQuestion()).content();
-
-        List<EmbeddingMatch<TextSegment>> relevant = store.findRelevant(queryEmbedded,3, 0.55);
+        List<EmbeddingMatch<TextSegment>> relevant = getEmbeddingMatches(question, store);
 
         List<Answer> answers = new ArrayList<>();
         StringBuilder info = new StringBuilder();
@@ -169,6 +163,19 @@ public class QuestionService {
 
         return new CompleteAnswer(reponse, answers);
 
+    }
+
+    private @NotNull List<EmbeddingMatch<TextSegment>> getEmbeddingMatches(Question question, EmbeddingStore<TextSegment> store) {
+        Embedding queryEmbedded = embeddingModel.embed(question.getQuestion()).content();
+
+        EmbeddingSearchResult<TextSegment> docs = store.search(EmbeddingSearchRequest.builder()
+                .queryEmbedding(queryEmbedded)
+                .build());
+
+        List<EmbeddingMatch<TextSegment>> relevant = docs.matches();
+
+        relevant.sort((o1, o2) -> o2.score().compareTo(o1.score()));
+        return relevant;
     }
 
 }
