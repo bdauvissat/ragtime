@@ -1,4 +1,4 @@
-package llm.devoxx.json;
+package llm.adelean.json;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
