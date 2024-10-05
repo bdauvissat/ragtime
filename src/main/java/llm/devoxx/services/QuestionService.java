@@ -64,7 +64,7 @@ public class QuestionService {
                     """
     );
 
-    private ChatMemory chatMemory = MessageWindowChatMemory.withMaxMessages(10);
+    private final ChatMemory chatMemory = MessageWindowChatMemory.withMaxMessages(10);
 
     public CompleteAnswer processQuestion(Question question) {
 
@@ -84,7 +84,6 @@ public class QuestionService {
 
         List<Answer> answers = new ArrayList<>();
 
-        StringBuilder rep = new StringBuilder(question.getQuestion());
         log.info("Generating answer for question: \"{}\"", question.getQuestion());
         for (var rel : relevant) {
             answers.add(new Answer(rel.embedded().text(), rel.score(), rel.embedded().metadata()));
