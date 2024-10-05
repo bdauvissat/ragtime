@@ -16,6 +16,7 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.elasticsearch.client.RestClient;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -51,6 +52,17 @@ public class Tools {
     @PostConstruct
     public void initialize() {
 
+        RestClient restClient = getRestClient();
+
+        ElasticsearchEmbeddingStore.Builder storeBuilder = ElasticsearchEmbeddingStore.builder().restClient(restClient);
+        store = storeBuilder
+                .indexName(elasticIndexName)
+                .build();
+                log.info("Elasticsearch Indexing Client OK on {}",elasticUrl);
+
+    }
+
+    private @NotNull RestClient getRestClient() {
         if (elasticUsername.isEmpty()) {
             log.error("Username is empty");
         }
@@ -63,20 +75,13 @@ public class Tools {
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(elasticUsername.get(),
                 elasticPassword.get()));
 
-        RestClient restClient = RestClient
+        return RestClient
                 .builder(HttpHost.create(elasticUrl))
                 .setHttpClientConfigCallback( hcb -> {
                     hcb.setDefaultCredentialsProvider(credentialsProvider);
                     return hcb;
                 })
                 .build();
-
-        ElasticsearchEmbeddingStore.Builder storeBuilder = ElasticsearchEmbeddingStore.builder().restClient(restClient);
-        store = storeBuilder
-                .indexName(elasticIndexName)
-                .build();
-                log.info("Elasticsearch Indexing Client OK on {}",elasticUrl);
-
     }
 
 
