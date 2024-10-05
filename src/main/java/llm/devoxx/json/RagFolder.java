@@ -1,32 +1,16 @@
 package llm.devoxx.json;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class RagFolder {
 
     private String path;
 
     private int limit;
 
-    public RagFolder() {
-    }
-
-    public RagFolder(String path, int limit) {
-        this.path = path;
-        this.limit = limit;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public int getLimit() {
-        return limit;
-    }
-
-    public void setLimit(int limit) {
-        this.limit = limit;
-    }
 }
