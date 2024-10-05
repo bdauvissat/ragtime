@@ -20,8 +20,9 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.Files;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +49,7 @@ public class EmbeddingService {
             return;
         }
 
-        documents.forEach(doc ->  embedAndStoreDocuments(tools.getStore(), embeddingModel, doc));
-
+        documents.forEach(doc -> embedAndStoreDocuments(tools.getStore(), embeddingModel, doc));
 
     }
 
@@ -65,63 +65,103 @@ public class EmbeddingService {
             return documents;
         }
 
-        try {
-            documents = getRagDocuments(folderPath);
-        } catch (IOException e) {
-            log.warn("Erreur lors de l'extraction des documents", e);
+        // txt files are computed
+        documents = getRagDocumentsFromTxt(folderPath, folder);
+        // and also json files
+        documents.addAll(getRagDocumentsFromJson(folder));
+        if (CollectionUtils.isEmpty(documents)) {
+            return null;
         }
 
         return documents;
 
     }
 
-    private List<RagDocument> getRagDocuments(RagFolder folderPath) throws IOException {
-        Path documentsPath = Paths.get(folderPath.getPath());
+    private List<RagDocument> getRagDocumentsFromJson(File folder) {
+        FilenameFilter filter = (dir, name) -> name.endsWith(".json");
+        File[] files = folder.listFiles(filter);
+
+        if (files == null || files.length == 0) {
+            log.warn("{} contains no Json file !", folder.getName());
+            return new ArrayList<>();
+        }
+        int count = 0;
         List<RagDocument> documents = new ArrayList<>();
         Gson gson = new Gson();
-        PathMatcher txtMatcher = FileSystems.getDefault().getPathMatcher("glob:*.txt");
-        PathMatcher jsonMatcher = FileSystems.getDefault().getPathMatcher("glob:*.json");
-        Files.walkFileTree(documentsPath, new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                log.debug("Visit {}", file);
-                if (txtMatcher.matches(file.getFileName())) {
-                    List<String> content = Files.readAllLines(file);
-                    String name = file.getFileName().toString();
-                    String path = file.toString();
-                    documents.add(new RagDocument(name, path, content));
+        for (File file : files) {
+
+            try {
+                String filecontent = Files.readString(file.toPath());
+                JsonArray jsonObject = JsonParser.parseString(filecontent).getAsJsonArray();
+                List<JsonElement> allArticles = jsonObject.getAsJsonArray().asList();
+                for (JsonElement article : allArticles) {
+                    // use gson mapper to deserialize
+                    RagDocument rd = gson.fromJson(article, RagDocument.class);
+
+                    documents.add(rd);
+                    count++;
+
                 }
-                if (jsonMatcher.matches(file.getFileName())) {
-                    String filecontent = Files.readString(file);
-                    JsonArray jsonObject = JsonParser.parseString(filecontent).getAsJsonArray();
-                    List<JsonElement> allArticles = jsonObject.getAsJsonArray().asList();
-                    for (JsonElement article : allArticles) {
-                        // use gson mapper to deserialize
-                        RagDocument rd = gson.fromJson(article, RagDocument.class);
-                        documents.add(rd);
-                    }
-                }
-                if (folderPath.getLimit() > 0 && documents.size() >= folderPath.getLimit()) {
-                    return FileVisitResult.TERMINATE;
-                }
-                return super.visitFile(file, attrs);
+            } catch (JsonSyntaxException e) {
+                log.error("Error while deserializing document at position {} from file {}", count, file.getName(), e);
             }
-        });
-        log.info("{} documents have been extracted from folder {}",documents.size(),folderPath.getPath());
+            catch (Exception e) {
+                log.error("Error while reading file {}", file.getName(), e);
+            }
+        }
+        log.info("{} documents have been extracted from folder {}",count,folder.getName());
         return documents;
+    }
+
+    private List<RagDocument> getRagDocumentsFromTxt(RagFolder folderPath, File folder) {
+        FilenameFilter filter = (dir, name) -> name.endsWith(".txt");
+        File[] files = folder.listFiles(filter);
+        List<RagDocument> documents = new ArrayList<>();
+
+        if (files == null || files.length == 0) {
+            log.warn("{} contains no text File.", folder.getName());
+            return documents;
+        }
+
+        int count = 0;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        for (File file : files) {
+            try {
+                List<String> content = Files.readAllLines(file.toPath());
+                String name = file.getName();
+                String path = file.getPath();
+                RagDocument doc = new RagDocument(name, path, content);
+                String dateTime = LocalDate.now().format(formatter);
+                doc.setDatetime(dateTime);
+                doc.setKeywords(List.of("Fichier"));
+                documents.add(doc);
+                count++;
+
+                if (folderPath.getLimit() > 0 && count >= folderPath.getLimit()) {
+                    break;
+                }
+
+            } catch (IOException e) {
+                log.error("Error while reading file {}", file.getName(), e);
+            }
+
+        }
+
+        return documents;
+
     }
 
     private void embedAndStoreDocuments(EmbeddingStore<TextSegment> store, EmbeddingModel model,
                                         RagDocument ragDocumentdocument) {
         Map<String, String> metas = Map.of(
-                "url", ragDocumentdocument.getUrl(), 
+                "url", ragDocumentdocument.getUrl(),
                 "title", ragDocumentdocument.getTitle(),
                 "datetime",ragDocumentdocument.getDatetime(),
                 "keywords", String.join(", ", ragDocumentdocument.getKeywords()));
-        
-        // Join with double lineSeparator (\n\n) in order to leverage DocumentByParagraphSplitter 
+
+        // Join with double lineSeparator (\n\n) in order to leverage DocumentByParagraphSplitter
         String content = String.join(System.lineSeparator()+System.lineSeparator(), ragDocumentdocument.getContent());
-        
+
         Document document = new Document(content, new Metadata(metas));
         DocumentSplitter splitter = new DocumentByParagraphSplitter(800, 50);
 

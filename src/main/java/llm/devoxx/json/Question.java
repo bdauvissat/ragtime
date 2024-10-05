@@ -14,4 +14,5 @@ public class Question {
     private boolean generateAnswer;
 
     private boolean newChat;
+
 }

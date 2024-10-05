@@ -12,4 +12,5 @@ public class ChatQuery {
     int nbLines;
 
     String language;
+
 }

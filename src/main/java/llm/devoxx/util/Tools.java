@@ -1,6 +1,5 @@
 package llm.devoxx.util;
 
-import co.elastic.clients.transport.TransportUtils;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.language.LanguageModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
@@ -8,26 +7,22 @@ import dev.langchain4j.model.ollama.OllamaLanguageModel;
 import dev.langchain4j.store.embedding.elasticsearch.ElasticsearchEmbeddingStore;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.SSLContext;
 import java.time.Duration;
 import java.util.Optional;
 
 @Singleton
+@Slf4j
 public class Tools {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Tools.class);
-    @ConfigProperty(name = "elastic.fingerprint")
-    Optional<String> fingerprint;
 
     @ConfigProperty(name = "elastic.username")
     Optional<String> elasticUsername;
@@ -44,12 +39,6 @@ public class Tools {
     @ConfigProperty(name = "elastic.url")
     String elasticUrl;
 
-    @ConfigProperty(name = "elastic.apiKey")
-    Optional<String> elasticApiKey;
-
-    @ConfigProperty(name = "elastic.dimension")
-    int elasticDimension;
-
     @ConfigProperty(name = "elastic.indexName")
     String elasticIndexName;
 
@@ -62,56 +51,40 @@ public class Tools {
     @ConfigProperty(name = "ollama.duration")
     int ollamaDuration;
 
-    @ConfigProperty(name = "ollama.retry")
-    int ollamaRetry;
-
+    @Getter
     private ElasticsearchEmbeddingStore store;
-
-    //private EmbeddingModel embeddingModel;
 
     @PostConstruct
     public void initialize() {
-        ElasticsearchEmbeddingStore.Builder storeBuilder = ElasticsearchEmbeddingStore.builder().serverUrl(elasticUrl);
+
+        if (elasticUsername.isEmpty()) {
+            log.error("Username is empty");
+        }
+
+        if (elasticPassword.isEmpty()) {
+            log.error("Password is empty");
+        }
+
+        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(elasticUsername.get(),
+                elasticPassword.get()));
+
+        RestClient restClient = RestClient
+                .builder(HttpHost.create(elasticUrl))
+                .setHttpClientConfigCallback( hcb -> {
+                    hcb.setDefaultCredentialsProvider(credentialsProvider);
+                    return hcb;
+                })
+                .build();
+
+        ElasticsearchEmbeddingStore.Builder storeBuilder = ElasticsearchEmbeddingStore.builder().restClient(restClient);
         store = storeBuilder
-                .restClient(buildRestClient())
-                .dimension(elasticDimension)
                 .indexName(elasticIndexName)
                 .build();
-                LOGGER.info("Elasticsearch Indexing Client OK on {}",elasticUrl);
-        
-        //embeddingModel = new OllamaEmbeddingModel(ollamaUrl, ollamaModel, Duration.ofSeconds(ollamaDuration),ollamaRetry);
-    }
-
-    
-    public ElasticsearchEmbeddingStore getStore() {
-        return store;
-    }
-
-    private RestClient buildRestClient() {
-
-        final SSLContext context = TransportUtils.sslContextFromCaFingerprint(fingerprint.orElse(Constants.EMPTY_STRING));
-
-        RestClientBuilder builder = RestClient.builder(HttpHost.create(elasticUrl));
-        if (elasticUsername.isPresent() && elasticPassword.isPresent()) {
-            BasicCredentialsProvider creds = new BasicCredentialsProvider();
-            creds.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(elasticUsername.get(),
-                    elasticPassword.get()));
-            builder.setHttpClientConfigCallback(ccb -> {
-                if (fingerprint.isPresent()) {
-                    ccb.setSSLContext(context).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-                }
-                ccb.setDefaultCredentialsProvider(creds);
-                return ccb;
-            });
-
-        }
-        return builder.build();
+                log.info("Elasticsearch Indexing Client OK on {}",elasticUrl);
 
     }
 
-   // public EmbeddingModel createEmbeddingModel() {
-   //     return embeddingModel;
-   // }
 
     public LanguageModel createLanguageModel() {
         return getLanguageModelBuilder()

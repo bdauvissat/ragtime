@@ -23,6 +23,8 @@ import dev.langchain4j.rag.query.transformer.CompressingQueryTransformer;
 import dev.langchain4j.rag.query.transformer.QueryTransformer;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
+import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
+import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -72,7 +74,13 @@ public class QuestionService {
 
         Embedding queryEmbedded = embeddingModel.embed(question.getQuestion()).content();
 
-        List<EmbeddingMatch<TextSegment>> relevant = store.findRelevant(queryEmbedded,3, 0.55);
+        EmbeddingSearchResult<TextSegment> docs = store.search(EmbeddingSearchRequest.builder()
+                .queryEmbedding(queryEmbedded)
+                .build());
+
+        List<EmbeddingMatch<TextSegment>> relevant = docs.matches();
+
+        relevant.sort((o1, o2) -> o2.score().compareTo(o1.score()));
 
         List<Answer> answers = new ArrayList<>();
 
@@ -81,9 +89,9 @@ public class QuestionService {
         for (var rel : relevant) {
             answers.add(new Answer(rel.embedded().text(), rel.score(), rel.embedded().metadata()));
 
-            rep.append(System.lineSeparator());
-            rep.append(rel.embedded().text());
         }
+
+        log.info("Generating answer for question: \"{}\"", question.getQuestion());
 
         if (question.isGenerateAnswer()) {
             String information = relevant.stream().map(rlv -> rlv.embedded().text()).collect(Collectors.joining("\n\n"));

@@ -1,8 +1,9 @@
 package llm.devoxx.json;
 
-import java.util.List;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class RagDocument {
@@ -24,4 +25,5 @@ public class RagDocument {
         this.url = url;
         this.content = content;
     }
+
 }
