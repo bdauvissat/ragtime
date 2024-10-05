@@ -1,4 +1,4 @@
-package llm.devoxx.json;
+package llm.adelean.json;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
