@@ -1,4 +1,4 @@
-package llm.devoxx.util;
+package llm.adelean.util;
 
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.language.LanguageModel;

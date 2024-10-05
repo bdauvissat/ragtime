@@ -1,4 +1,4 @@
-package llm.devoxx.util;
+package llm.adelean.util;
 
 public interface DocumentChat {
 
