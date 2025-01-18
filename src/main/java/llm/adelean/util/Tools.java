@@ -1,8 +1,6 @@
 package llm.adelean.util;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.language.LanguageModel;
-import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.ollama.OllamaLanguageModel;
 import dev.langchain4j.store.embedding.elasticsearch.ElasticsearchEmbeddingStore;
 import jakarta.annotation.PostConstruct;
@@ -90,14 +88,6 @@ public class Tools {
                 .timeout(Duration.ofSeconds(ollamaDuration))
                 .build();
 
-    }
-
-    public ChatLanguageModel createChatModel() {
-        return OllamaChatModel.builder()
-                .baseUrl(ollamaUrl)
-                .modelName(ollamaModel)
-                .timeout(Duration.ofSeconds(ollamaDuration))
-                .build();
     }
 
     private OllamaLanguageModel.OllamaLanguageModelBuilder getLanguageModelBuilder() {
