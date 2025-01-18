@@ -1,9 +1,5 @@
 package llm.adelean.util;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.language.LanguageModel;
-import dev.langchain4j.model.ollama.OllamaChatModel;
-import dev.langchain4j.model.ollama.OllamaLanguageModel;
 import dev.langchain4j.store.embedding.elasticsearch.ElasticsearchEmbeddingStore;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
@@ -18,7 +14,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.elasticsearch.client.RestClient;
 import org.jetbrains.annotations.NotNull;
 
-import java.time.Duration;
 import java.util.Optional;
 
 @Singleton
@@ -36,15 +31,6 @@ public class Tools {
 
     @ConfigProperty(name = "elastic.indexName")
     String elasticIndexName;
-
-    @ConfigProperty(name = "ollama.url")
-    String ollamaUrl;
-
-    @ConfigProperty(name = "ollama.model")
-    String ollamaModel;
-
-    @ConfigProperty(name = "ollama.duration")
-    int ollamaDuration;
 
     @Getter
     private ElasticsearchEmbeddingStore store;
@@ -82,28 +68,6 @@ public class Tools {
                     return hcb;
                 })
                 .build();
-    }
-
-
-    public LanguageModel createLanguageModel() {
-        return getLanguageModelBuilder()
-                .timeout(Duration.ofSeconds(ollamaDuration))
-                .build();
-
-    }
-
-    public ChatLanguageModel createChatModel() {
-        return OllamaChatModel.builder()
-                .baseUrl(ollamaUrl)
-                .modelName(ollamaModel)
-                .timeout(Duration.ofSeconds(ollamaDuration))
-                .build();
-    }
-
-    private OllamaLanguageModel.OllamaLanguageModelBuilder getLanguageModelBuilder() {
-        return OllamaLanguageModel.builder()
-                .baseUrl(ollamaUrl)
-                .modelName(ollamaModel);
     }
 
 }
